@@ -1,0 +1,160 @@
+<head>
+    <style> body { margin: 0; } </style>
+  
+    <script src="//unpkg.com/3d-force-graph"></script>
+    <!--<script src="../../dist/3d-force-graph.js"></script>-->
+  </head>
+  
+  <body>
+  
+    <div id="3d-graph" width="960" height="900"></div>
+    <script type="module">
+      import { UnrealBloomPass } from '//unpkg.com/three/examples/jsm/postprocessing/UnrealBloomPass.js';
+      // import { AfterimagePass  } from '//unpkg.com/three/examples/jsm/postprocessing/AfterimagePass.js';
+      const elem = document.getElementById('3d-graph');
+
+      const pathNodes = new Set();
+      const hpathNodes = new Set();
+      const highlightNodes = new Set();
+      let hoverNode = null;
+      let rclickedNode = null
+
+      let scale_factor = 1;
+      const Graph = ForceGraph3D()(elem)
+        .jsonUrl('viz/multivers.json')
+        .nodeColor(node => {
+          if(node.id == 0) return '#FFDD33';
+          
+          if (hoverNode) {
+            if (hoverNode.id == node.id) return '#FF11AA';
+            else if (pathNodes.has(node.id)) return '#11DD11';
+            else if (highlightNodes.has(node.id)) return '#FF3333';
+          }
+          if (node.reached == 1) {
+            return '#ede68a';
+          }
+
+          return '#222831';
+        })
+        .linkColor(link => {
+          if (hoverNode) {
+            if ((pathNodes.has(link.source.id) && pathNodes.has(link.target.id))) {
+              if (link.unreached == 0) 
+                return "#77FFAA";
+              return "#11DD11";
+            } else if (hoverNode.id == link.source.id || hoverNode.id == link.target.id) {
+              return link.unreached == 1 ? '#AA0000' : '#FF2222';
+            } else if((hpathNodes.has(link.source.id) && hpathNodes.has(link.target.id)))
+              return "#DD55DD";
+          }
+          return link.unreached == 1 ? '#23103A' : '#14ffec';         
+        })
+
+        .linkVisibility(link => {
+          if(rclickedNode != null) {
+            if(highlightNodes.has(link.source.id) && hoverNode.id == link.target.id)
+              return true;
+            if(highlightNodes.has(link.target.id) && hoverNode.id == link.source.id)
+              return true;      
+            
+            if(rclickedNode.neighbors.includes(link.target.id) || rclickedNode.neighbors.includes(link.source.id))
+              return true;
+            
+            if((pathNodes.has(link.source.id) && pathNodes.has(link.target.id)))
+              return true;
+
+            // for (let i = 1; i < hpathNodes.length; i++) {
+            //   if(link.source.id == hpathNodes[i-1] && link.target.id == hpathNodes[i])            
+            //     return true;
+            //   if(link.source.id == hpathNodes[i] && link.target.id == hpathNodes[i-1])            
+            //     return true;
+            // }
+            if((hpathNodes.has(link.source.id) && hpathNodes.has(link.target.id)))
+              return true;
+            return false;
+          }
+
+          if(link.unreached == 1) {
+            if(highlightNodes.has(link.source.id) && hoverNode.id == link.target.id)
+              return true;
+            if(highlightNodes.has(link.target.id) && hoverNode.id == link.source.id)
+              return true;  
+            if((pathNodes.has(link.source.id) && pathNodes.has(link.target.id)))
+              return true;
+            return false;  
+          } 
+          
+          return true;
+        })
+        .nodeVisibility(node => {
+          if(rclickedNode != null) {
+            return highlightNodes.has(node.id)
+                  || node.neighbors.some((neigh)=>highlightNodes.has(neigh))
+                  || hpathNodes.has(node.id) 
+                  || pathNodes.has(node.id);
+            // return node.neighbors.some((neigh)=>highlightNodes.has(neigh))
+            //       || node.neighbors.some((neigh)=>pathNodes.has(neigh))
+            //       || highlightNodes.has(node.id) 
+            //       || hpathNodes.has(node.id) 
+            //       || pathNodes.has(node.id);
+          }
+          return true;
+        })
+        .nodeVal(node => scale_factor * (node.reached == 1 ? (node.id == 0 ? 30 : 4) : 2))
+        // .nodeOpacity(node => node.unreached == 1 ? 0.3 : 0.6)
+        .nodeLabel(node => `${node.name}`)
+        .onNodeHover(node => {
+          if ((!node && !highlightNodes.size) || (node && hoverNode === node)) return;
+          
+          elem.style.cursor = node ? 'pointer' : null
+          if(!rclickedNode) {
+            focus_on(node)
+          }
+        })
+        .onNodeRightClick( (node, event) => {
+          if (node == rclickedNode)
+            rclickedNode = null;
+          else
+            rclickedNode = node;
+
+          focus_on(node);
+        })
+        .linkOpacity(1)
+        .linkWidth(link => scale_factor *  (link.unreached == 1 ? 0.75 : 1.5))
+        .nodeOpacity(1)
+        .linkDirectionalParticles((link)=> link.unreached == 1 ? 0 : 3)
+        .linkDirectionalParticleSpeed(0.01)
+        .linkDirectionalParticleWidth(scale_factor * 5)
+        .linkDirectionalParticleColor("#FFFFFF")
+        .onNodeClick(node => console.log(node))//window.open(`https://bl.ocks.org/${node.user}/${node.id}`, '_blank'));
+        .onLinkClick(link => console.log(link));
+
+        function focus_on(node) {
+          highlightNodes.clear();
+          pathNodes.clear();
+          hpathNodes.clear();
+          if (node) {
+            highlightNodes.add(node.id);
+            node.neighbors.forEach(neighbor => highlightNodes.add(neighbor));
+            node.s_path.forEach(n => pathNodes.add(n));
+            // node.h_path.forEach(n => hpathNodes.add(n));
+            node.hs_path.forEach(n => hpathNodes.add(n));
+          }
+          hoverNode = node || null;
+          updateHighlight();
+        }
+
+        const bloomPass = new UnrealBloomPass();
+        bloomPass.strength = 1.5;
+        bloomPass.radius = 0.4;
+        bloomPass.threshold = 0.2;
+        Graph.postProcessingComposer().addPass(bloomPass);
+        
+        function updateHighlight() {
+          Graph
+            .nodeColor(Graph.nodeColor())
+            .linkWidth(Graph.linkWidth())
+            .linkDirectionalParticles(Graph.linkDirectionalParticles());
+        }
+    </script>
+  </body>

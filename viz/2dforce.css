@@ -1,0 +1,12 @@
+.nodes circle {
+    cursor: pointer;
+    fill: #7bb1cf;
+    stroke: #FFFFFF;
+    stroke-width: .5px;
+}
+
+.links line {
+    fill: none;
+    stroke: #bc9dca;
+    stroke-width: 1px;
+}
