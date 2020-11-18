@@ -68,6 +68,9 @@ def bfs(G, node_idx, reach_proba = 0.8):
                     d['unreached'] = 1
                 else:
                     d['unreached'] = 0 if random.random() < reach_proba else 1
+                    if d['unreached'] == 1:
+                        d['unreached'] = 0 if random.random() < reach_proba else 1
+
                     # print("Just setted:", parent_idx, t, d['unreached'])
                     if d['unreached'] == 0:
                         target['reached'] = 1
@@ -118,10 +121,10 @@ def path_weight(G, path):
     return w
 
 
-random.seed(123)
-N = 500
+random.seed(123458)
+N = 800
 K = 4
-reach_proba = 0.8
+reach_proba = 0.5
 # Graph
 G = nx.random_regular_graph(K,N, seed=30)
 print("Graph done")
@@ -170,7 +173,11 @@ for n in G:
 
 d = json_graph.node_link_data(G)
 json.dump(d, open("viz/multivers.json", "w"))
-print("Successfully generated multivers data in ")
+print("Successfully generated multivers data ")
+nb_reached = 0
+for n in G:
+    nb_reached += 0 if G.nodes[n]['reached'] == 0 else 1
+print("Reached:", nb_reached, "planets on", N)
 
 
 
