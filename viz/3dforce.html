@@ -2,6 +2,8 @@
     <style> body { margin: 0; } </style>
   
     <script src="//unpkg.com/3d-force-graph"></script>
+    <script src="//unpkg.com/three"></script>
+    <script src="//unpkg.com/three-spritetext"></script>
     <!--<script src="../../dist/3d-force-graph.js"></script>-->
   </head>
   
@@ -18,24 +20,74 @@
       const highlightNodes = new Set();
       let hoverNode = null;
       let rclickedNode = null
-
       let scale_factor = 1;
+
+
+      function node_color(node){
+        if(node.id == 0) return '#FFDD33';
+        
+        if (hoverNode) {
+          if (hoverNode.id == node.id) return '#FF11AA';
+          else if (pathNodes.has(node.id)) return '#11DD11';
+          else if (highlightNodes.has(node.id)) return '#FF3333';
+        }
+        if (node.reached == 1) {
+          return '#ede68a';
+        }
+
+        return '#222831';
+      }
+
+      function node_opacity(node){
+        if(node.id == 0) return 1;
+        
+        if (hoverNode) {
+          if (hoverNode.id == node.id) return 1;
+          else if (pathNodes.has(node.id)) return 1;
+          else if (highlightNodes.has(node.id)) return 1;
+        }
+        if (node.reached == 1) {
+          return 1;
+        }
+
+        return 0.6;
+      }
+
+      function node_size(node){
+        return scale_factor * (node.reached == 1 ? (node.id == 0 ? 30 : 4) : 2);
+      }
+
       const Graph = ForceGraph3D()(elem)
         .jsonUrl('viz/multivers.json')
         .nodeColor(node => {
-          if(node.id == 0) return '#FFDD33';
-          
-          if (hoverNode) {
-            if (hoverNode.id == node.id) return '#FF11AA';
-            else if (pathNodes.has(node.id)) return '#11DD11';
-            else if (highlightNodes.has(node.id)) return '#FF3333';
-          }
-          if (node.reached == 1) {
-            return '#ede68a';
-          }
-
-          return '#222831';
+          return node_color(node);
         })
+        .nodeThreeObjectExtend(true)
+        .nodeThreeObject(node => {
+          if(rclickedNode) {
+            if (!( highlightNodes.has(node.id)
+                  || node.neighbors.some((neigh)=>highlightNodes.has(neigh))
+                  || hpathNodes.has(node.id) 
+                  || pathNodes.has(node.id))) {
+                    return null;
+                  }
+                  
+          }
+          if(node.reached == 0 && !rclickedNode) return null;
+
+          const sprite = new SpriteText(`${node.name}` + '\n\n\n');
+          sprite.color = 'lightgrey';
+          sprite.textHeight = 9;
+          return sprite;
+        })
+        // .nodeThreeObject((node) => 
+        //   new THREE.Mesh(new THREE.SphereGeometry(node_size(node)),
+        //           new THREE.MeshLambertMaterial({
+        //             color: node_color(node),
+        //             transparent: true,
+        //             opacity: 0.75
+        //           })))
+
         .linkColor(link => {
           if (hoverNode) {
             if ((pathNodes.has(link.source.id) && pathNodes.has(link.target.id))) {
@@ -149,7 +201,21 @@
         bloomPass.radius = 0.4;
         bloomPass.threshold = 0.2;
         Graph.postProcessingComposer().addPass(bloomPass);
+              
         
+        // const loader = new THREE.CubeTextureLoader();
+        // const texture = loader.load([
+        //   'viz/sky_neg_x.jpg',
+        //   'viz/sky_pos_x.jpg',
+        //   'viz/sky_pos_y.jpg',
+        //   'viz/sky_neg_y.jpg',
+        //   'viz/sky_neg_z.jpg',
+        //   'viz/sky_pos_z.jpg',
+        // ]);
+        // Graph.scene().background = texture;
+
+
+
         function updateHighlight() {
           Graph
             .nodeColor(Graph.nodeColor())
