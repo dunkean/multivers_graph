@@ -132,7 +132,7 @@
             } else if((hpathNodes.has(link.source.id) && hpathNodes.has(link.target.id)))
               return "#DD55DD";
           }
-          return link.unreached == 1 ? '#23103A' : '#14ffec';         
+          return link.unreached == 1 ? '#23103A' : ( (node_color_filter != "Standard") ? '#333333' : '#14ffec');         
         })
 
         .linkVisibility(link => {
@@ -197,7 +197,7 @@
             focus_on(node)
           }
         })
-        .onNodeRightClick( (node, event) => {
+        .onNodeClick( (node, event) => {
           if (node == rclickedNode)
             rclickedNode = null;
           else
@@ -212,7 +212,19 @@
         .linkDirectionalParticleSpeed(0.01)
         .linkDirectionalParticleWidth(scale_factor * 5)
         .linkDirectionalParticleColor("#FFFFFF")
-        .onNodeClick(node => console.log(node))//window.open(`https://bl.ocks.org/${node.user}/${node.id}`, '_blank'));
+        .onNodeRightClick(node =>{ 
+          // console.log(node)
+          // Aim at node from outside it
+          const distance = 300;
+          const distRatio = 1 + distance/Math.hypot(node.x, node.y, node.z);
+
+          Graph.cameraPosition(
+            { x: node.x * distRatio, y: node.y * distRatio, z: node.z * distRatio }, // new position
+            node, // lookAt ({ x, y, z })
+            2000  // ms transition duration
+          );
+        
+        })//window.open(`https://bl.ocks.org/${node.user}/${node.id}`, '_blank'));
         .onLinkClick(link => console.log(link));
 
         function get_txt(node) {

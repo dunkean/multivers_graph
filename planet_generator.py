@@ -35,7 +35,7 @@ def random_planet():
             if att not in attribs:
                 attribs.append(att)
         planet[attr['title']] = attribs
-        ctxt = "rgb(" + str(color[0] * 255) + "," + str(color[1] * 255) + "," + str(color[2] * 255) + ")"
+        ctxt = "rgb(" + str(color[0] * 128) + "," + str(color[1] * 128) + "," + str(color[2] * 128) + ")"
         colored_planet[attr['title']] = ctxt
     return planet, colored_planet
 
@@ -161,7 +161,7 @@ def path_weight(G, path):
     return w
 
 
-random.seed(1)
+random.seed(666)
 N = 800
 K = 4
 reach_proba = 0.45

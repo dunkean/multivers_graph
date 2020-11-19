@@ -14,10 +14,6 @@ A,E,I,O,U
 Quasi nulle,Faible,Terre,Important,Internale
 A,E,I,O,U
 0.2,5,40,10,1
-0.4,Biome
-Aride,Steppe,Forêt clairsemée,Forêt dense,Souterrain,Mer,Spatial
-A,E,I,O,U,OU,IA
-20,20,20,20,2,30,0.01
 0,Pop
 Désert,Préhistoire,Antiquité,Moyen Age,Préindustriel,Industriel,Megalopole unique,Surpeuplé,Empilés
 B,D,F,G,N,P,R,X,Z
@@ -30,3 +26,7 @@ A,E,I,O,U,OU
 Idolatrie,Accueillant,Amicale,Désintéré,Méfiant,Hautain,Raciste,Hostile,Dangereux
 B,C,D,F,N,P,R,X,Z
 1,10,30,30,30,30,30,10,5
+0.7,Biome
+Aride,Steppe,Forêt claire,Forêt,Souterrain,Mer,Spatial
+A,E,I,O,U,OU,IA
+20,20,20,20,2,10,0.01
