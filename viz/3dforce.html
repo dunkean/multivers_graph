@@ -51,6 +51,9 @@
       // import { AfterimagePass  } from '//unpkg.com/three/examples/jsm/postprocessing/AfterimagePass.js';
       const elem = document.getElementById('3d-graph');
 
+      elem.addEventListener('dblclick', function(){ 
+        Graph.zoomToFit(1000);
+      });
 
       const pathNodes = new Set();
       const hpathNodes = new Set();
@@ -89,7 +92,7 @@
           hover_activated = !hover_activated;
         }
       });
-
+      
       function get_node_name_obj(node) {
         if(node.id in three_objects)
           return three_objects[node.id];
@@ -311,9 +314,9 @@
           }
         })
         .onNodeClick( (node, event) => {
-          if (node == rclickedNode)
+          if (node == rclickedNode){
             rclickedNode = null;
-          else {
+          } else {
             rclickedNode = node;
             Graph.cameraPosition(
             {  }, // new position

@@ -89,14 +89,13 @@ def next_id(parent_id, pos):
     return parent_id + random.choice(t)
 
 
-def init_node(node_idx, pos):
+def init_node(node_idx):
     node = G.nodes[node_idx]
     node['name'] = random_name()
-    node['pos'] = pos
     planet, colored_planet = random_planet()
     node['planet'] = planet
-    for key in colored_planet:
-        node[key] = colored_planet[key]
+    # for key in colored_planet:
+    #     node[key] = colored_planet[key]
 
 
 def bfs(G, node_idx, reach_proba = 0.8):
@@ -154,7 +153,7 @@ def bfs(G, node_idx, reach_proba = 0.8):
             
             if t not in node_idxs:
                 node_idxs.insert(random.randint(index+1, len(node_idxs)+1), t) #parcours pseudo aléatoire
-                init_node(t, pos)
+                init_node(t)
 
         index += 1
 
@@ -220,9 +219,11 @@ from networkx.readwrite import json_graph
 for n in G:
     node = G.nodes[n]
     node['neighbors'] = []
+    # node['neighbors_name'] = []
     edges = G.edges(n, data=True)
     for _,t,d in edges:
         node['neighbors'].append(t)
+        # node['neighbors_name'].append(G.nodes[t]['name'])
     s_path = nx.single_source_dijkstra(G, source=0, target=n)
     s_path_w = path_weight(G, s_path[1])
     s_reachable_path = nx.single_source_dijkstra(G, source=0, target=n, weight='unreached')
@@ -253,7 +254,7 @@ for n in G:
 
 
 d = json_graph.node_link_data(G)
-json.dump(d, open("viz/multivers.json", "w"))
+json.dump(d, open("viz/multivers.json", "w"), indent=4)
 print("Successfully generated multivers data ")
 nb_reached = 0
 for n in G:
