@@ -96,16 +96,16 @@
 
         const sprite = new SpriteText(`${node.name}` + '\n\n\n');
         sprite.color = 'lightgrey';
-        sprite.textHeight = 9;
+        sprite.textHeight = (node.id == 0 ? 14 : 9);
         three_objects[node.id] = sprite
         return sprite;
       }
   
-      function get_color_from_legend(node) {
-        let value = node.planet[node_color_filter][0];
-        for (let i in legend[node_color_filter]) {
-          if(legend[node_color_filter][i][0] == value)
-            return legend[node_color_filter][i][1];
+      function get_color_from_legend(node, category) {
+        let value = node.planet[category][0];
+        for (let i in legend[category]) {
+          if(legend[category][i][0] == value)
+            return legend[category][i][1];
         }
       }
 
@@ -113,22 +113,19 @@
         if(node.id == 0) return '#FFDD33';
 
         if(node_color_filter != "Standard") {
-          return get_color_from_legend(node);
-          // let color = node[node_color_filter];
-          return color;
+          return get_color_from_legend(node, node_color_filter);
         }
         
         if (hoverNode) {
-          if (hoverNode.id == node.id) return '#FF11AA';
-          else if ((hover_activated || rclickedNode) && pathNodes.has(node.id)) return '#11DD11';
+          if (hoverNode.id == node.id) return '#FF0000';
           else if ((hover_activated || rclickedNode) && highlightNodes.has(node.id)) return '#FF3333';
+          else if ((hover_activated || rclickedNode) && pathNodes.has(node.id)) return '#11DD11';
         }
         if (node.reached == 1) {
           return '#ede68a';
         }
 
-        return node["dark"]
-        // return '#222831';
+        return get_color_from_legend(node, "Reaction");
       }
 
       function get_legend(key) {
@@ -216,13 +213,20 @@
         })
         .linkColor(link => {
           if (hoverNode && (hover_activated || rclickedNode)) {
-            if ((pathNodes.has(link.source.id) && pathNodes.has(link.target.id))) {
+            if (hoverNode.id == link.source.id || hoverNode.id == link.target.id) {
+              let neighbor_id = (hoverNode.id == link.source.id) ? link.target.id : link.source.id;
+              if(neighbor_id === hoverNode.neighbors[0]) return '#AA2222';
+              if(neighbor_id === hoverNode.neighbors[1]) return '#FFFF55';
+              if(neighbor_id === hoverNode.neighbors[2]) return '#5555FF';
+              if(neighbor_id === hoverNode.neighbors[3]) return '#0099FF';
+              return '#FF2222';
+              // return link.unreached == 1 ? '#AA0000' : '#FF2222';
+            } else if ((pathNodes.has(link.source.id) && pathNodes.has(link.target.id))) {
               if (link.unreached == 0) 
                 return "#77FFAA";
               return "#11DD11";
-            } else if (hoverNode.id == link.source.id || hoverNode.id == link.target.id) {
-              return link.unreached == 1 ? '#AA0000' : '#FF2222';
-            } else if((hpathNodes.has(link.source.id) && hpathNodes.has(link.target.id)))
+            }
+            else if((hpathNodes.has(link.source.id) && hpathNodes.has(link.target.id)))
               return "#DD55DD";
           }
           return link.unreached == 1 ? '#333333' : ( (node_color_filter != "Standard") ? '#333333' : '#14ffec');         
@@ -309,8 +313,14 @@
         .onNodeClick( (node, event) => {
           if (node == rclickedNode)
             rclickedNode = null;
-          else
+          else {
             rclickedNode = node;
+            Graph.cameraPosition(
+            {  }, // new position
+            node, // lookAt ({ x, y, z })
+            1500  // ms transition duration
+          );
+          }
 
           focus_on(node);
         })
@@ -340,19 +350,23 @@
 
         function get_txt(node) {
           if(!node) return ''
-          if(node.id == 0) return "<h2><b> La Terre </b></h2>"
+          // if(node.id == 0) return "<h2><b> La Terre </b></h2>"
           var txt = "<h2><b>" + node.name + "</b></h2>";
           // txt += "<p style='text-align:left'>";
+          if(node_color_filter != "Standard" && node.id != 0) {
+            txt += "<h3><b>" + node.planet[node_color_filter].join(', ') + "</b></h3>";
+          } else {
+            txt += "<h3> </h3>";
+          }
           for (let key in node.planet) {
             txt += "<b>" + key + "</b>:  " + node.planet[key].join(', ') + "<br>";
           }
-          // txt += "</p>";
-          if(node_color_filter != "Standard") {
-            txt += "<h2><b>" + node.planet[node_color_filter].join(', ') + "</b></h2>";
-          } else {
-            txt += "<h2> </h2>";
-          }
-          
+          txt +="<br><br>";
+          txt += "<b><span style='font-size: 120%; color:#AA2222'>N</span></b>:  " + Graph.graphData().nodes.find(obj => { return obj.id === node.neighbors[0] }).name + "<br>";
+          txt += "<b><span style='font-size: 120%; color:#FFFF55'>S</span></b>:  " + Graph.graphData().nodes.find(obj => { return obj.id === node.neighbors[1] }).name + "<br>";
+          txt += "<b><span style='font-size: 120%; color:#5555FF'>E</span></b>:  " + Graph.graphData().nodes.find(obj => { return obj.id === node.neighbors[2] }).name + "<br>";
+          txt += "<b><span style='font-size: 120%; color:#0099FF'>A</span></b>:  " + Graph.graphData().nodes.find(obj => { return obj.id === node.neighbors[3] }).name + "<br><br>";
+          txt +="<br>";
           txt += "<b>Plus court:</b>:  " + node.s_path.length + "<br>";
           if(node.h_path.length !=  node.hs_path_kn.length)
             txt += "<b>Plus simple:</b>:  " + node.hs_path_unkn.length + " + " + node.hs_path_kn.length + "<br>";
