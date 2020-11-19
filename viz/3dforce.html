@@ -43,12 +43,12 @@
       let node_color_filter = "Standard"
       
       function node_color(node){
+        if(node.id == 0) return '#FFDD33';
+
         if(node_color_filter != "Standard") {
           let color = node[node_color_filter];
           return color;
         }
-
-        if(node.id == 0) return '#FFDD33';
         
         if (hoverNode) {
           if (hoverNode.id == node.id) return '#FF11AA';
@@ -228,12 +228,17 @@
         .onLinkClick(link => console.log(link));
 
         function get_txt(node) {
+          if(!node) return ''
+          if(node.id == 0) return "<h2><b> La Terre </b></h2>"
           var txt = "<h2><b>" + node.name + "</b></h2>";
           txt += "<p style='text-align:left'>";
           for (let key in node.planet) {
-            txt += "<b>" + key + "</b>:  " + node.planet[key] + "<br>";
+            txt += "<b>" + key + "</b>:  " + node.planet[key].join(', ') + "<br>";
           }
           txt += "</p>";
+          if(node_color_filter != "Standard") {
+            txt += "<h2><b>" + node.planet[node_color_filter].join(', ') + "</b></h2>";
+          }
           return txt;
         }
 
