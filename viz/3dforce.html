@@ -5,25 +5,49 @@
     <script src="//unpkg.com/three"></script>
     <script src="//unpkg.com/three-spritetext"></script>
     <!--<script src="../../dist/3d-force-graph.js"></script>-->
+    <link rel="stylesheet" href="viz/style.css">
   </head>
   
   <body>
-  
-    <div id="3d-graph" width="960" height="900"></div>
+    
+    <div id="3d-graph"></div>
+    <div class="dimensions-selector">
+        <input type="radio" name="color_radio" id='Standard' checked> Reached
+        <input type="radio" name="color_radio" id='Techno'> Techno
+        <input type="radio" name="color_radio" id='Flux'> Flux
+        <input type="radio" name="color_radio" id='Temp'> Temp
+        <input type="radio" name="color_radio" id='Gravity'> Gravity
+        <input type="radio" name="color_radio" id='Biome'> Biome
+        <input type="radio" name="color_radio" id='Pop'> Pop density
+        <input type="radio" name="color_radio" id='Inh'> Inhabitants
+        <input type="radio" name="color_radio" id='Reaction'> Social
+    </div>
+    <div class="graph-data">
+        <span id="graph-data-description"></span>
+    </div>
+
+
     <script type="module">
       import { UnrealBloomPass } from '//unpkg.com/three/examples/jsm/postprocessing/UnrealBloomPass.js';
       // import { AfterimagePass  } from '//unpkg.com/three/examples/jsm/postprocessing/AfterimagePass.js';
       const elem = document.getElementById('3d-graph');
 
+
+
       const pathNodes = new Set();
       const hpathNodes = new Set();
       const highlightNodes = new Set();
       let hoverNode = null;
-      let rclickedNode = null
+      let rclickedNode = null;
       let scale_factor = 1;
-
-
+      let node_color_filter = "Standard"
+      
       function node_color(node){
+        if(node_color_filter != "Standard") {
+          let color = node[node_color_filter];
+          return color;
+        }
+
         if(node.id == 0) return '#FFDD33';
         
         if (hoverNode) {
@@ -36,6 +60,15 @@
         }
 
         return '#222831';
+      }
+
+      if (document.querySelector('input[name="color_radio"]')) {
+        document.querySelectorAll('input[name="color_radio"]').forEach((elem) => {
+          elem.addEventListener("change", function(event) {
+            node_color_filter = event.target.id;
+            updateHighlight();
+          });
+        });
       }
 
       function node_opacity(node){
@@ -157,9 +190,10 @@
         .nodeLabel(node => `${node.name}`)
         .onNodeHover(node => {
           if ((!node && !highlightNodes.size) || (node && hoverNode === node)) return;
-          
+
           elem.style.cursor = node ? 'pointer' : null
           if(!rclickedNode) {
+            
             focus_on(node)
           }
         })
@@ -181,6 +215,16 @@
         .onNodeClick(node => console.log(node))//window.open(`https://bl.ocks.org/${node.user}/${node.id}`, '_blank'));
         .onLinkClick(link => console.log(link));
 
+        function get_txt(node) {
+          var txt = "<h2><b>" + node.name + "</b></h2>";
+          txt += "<p style='text-align:left'>";
+          for (let key in node.planet) {
+            txt += "<b>" + key + "</b>:  " + node.planet[key] + "<br>";
+          }
+          txt += "</p>";
+          return txt;
+        }
+
         function focus_on(node) {
           highlightNodes.clear();
           pathNodes.clear();
@@ -191,6 +235,7 @@
             node.s_path.forEach(n => pathNodes.add(n));
             // node.h_path.forEach(n => hpathNodes.add(n));
             node.hs_path.forEach(n => hpathNodes.add(n));
+            document.getElementById('graph-data-description').innerHTML = get_txt(node);
           }
           hoverNode = node || null;
           updateHighlight();
@@ -222,5 +267,7 @@
             .linkWidth(Graph.linkWidth())
             .linkDirectionalParticles(Graph.linkDirectionalParticles());
         }
+
+
     </script>
   </body>

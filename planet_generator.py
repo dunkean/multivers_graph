@@ -2,6 +2,42 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import random
 from operator import itemgetter
+from matplotlib import cm
+import sys
+
+colormap = cm.get_cmap('Paired').colors
+attrib_file = open("attributes.txt", encoding="utf8")
+lines = attrib_file.readlines()
+attrs = []
+
+for i in range(int(len(lines)/4)):
+    idx = 4*i
+    attrs.append({
+        'title': lines[idx].strip().split(',')[1],
+        'prob_multi': float(lines[idx].strip().split(',')[0]),
+        'keys': lines[idx+1].strip().split(','),
+        'letters': lines[idx+2].strip().split(','),
+        'choice_prob': [float(p) for p in lines[idx+3].strip().split(',')] 
+    })
+
+def random_planet():
+    planet = {}
+    colored_planet = {}
+    for attr in attrs:
+        attribs = []
+        multi = attr['prob_multi']
+        index = random.choices(range(len(attr['keys'])), attr['choice_prob'])[0]
+        attribs.append(attr['keys'][index])
+        color = colormap[index]
+        while random.random() < multi:
+            index = random.choices(range(len(attr['keys'])), attr['choice_prob'])[0]
+            att = attr['keys'][index]
+            if att not in attribs:
+                attribs.append(att)
+        planet[attr['title']] = attribs
+        ctxt = "rgb(" + str(color[0] * 255) + "," + str(color[1] * 255) + "," + str(color[2] * 255) + ")"
+        colored_planet[attr['title']] = ctxt
+    return planet, colored_planet
 
 
 fp = open("name_db/cities5000.txt", encoding="utf8")
@@ -25,6 +61,10 @@ def init_node(node_idx, pos):
     node = G.nodes[node_idx]
     node['name'] = random_name()
     node['pos'] = pos
+    planet, colored_planet = random_planet()
+    node['planet'] = planet
+    for key in colored_planet:
+        node[key] = colored_planet[key]
 
 
 def bfs(G, node_idx, reach_proba = 0.8):
@@ -121,10 +161,10 @@ def path_weight(G, path):
     return w
 
 
-random.seed(123458)
+random.seed(1)
 N = 800
 K = 4
-reach_proba = 0.5
+reach_proba = 0.45
 # Graph
 G = nx.random_regular_graph(K,N, seed=30)
 print("Graph done")
