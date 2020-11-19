@@ -347,10 +347,13 @@
           // txt += "</p>";
           if(node_color_filter != "Standard") {
             txt += "<h2><b>" + node.planet[node_color_filter].join(', ') + "</b></h2>";
+          } else {
+            txt += "<h2> </h2>";
           }
-          // console.log(node.s_path)
+          
           txt += "<b>Plus court:</b>:  " + node.s_path.length + "<br>";
-          txt += "<b>Plus simple:</b>:  " + node.hs_path.length + "<br>";
+          if(node.h_path.length !=  node.hs_path_kn.length)
+            txt += "<b>Plus simple:</b>:  " + node.hs_path_unkn.length + " + " + node.hs_path_kn.length + "<br>";
           if(node.h_path.length > 0)
             txt += "<b>Connu:</b>:  " + node.h_path.length + "<br>";
           return txt;

@@ -193,10 +193,10 @@ def path_weight(G, path):
     return w
 
 
-random.seed(666)
-N = 50
+random.seed(111)
+N = 350
 K = 4
-reach_proba = 0.35
+reach_proba = 0.5
 # Graph
 G = nx.random_regular_graph(K,N, seed=30)
 print("Graph done")
@@ -240,6 +240,15 @@ for n in G:
     node['h_path'] = h_path
     node['s_path'] = s_path[1]
     node['hs_path'] = s_reachable_path[1]
+    knowns = []
+    unknowns = []
+    for nid in s_reachable_path[1]:
+        if G.nodes[nid]['reached'] == 1:
+            knowns.append(nid)
+        else:
+            unknowns.append(nid)
+    node['hs_path_kn'] = knowns
+    node['hs_path_unkn'] = unknowns
 
 
 
