@@ -47,6 +47,12 @@
 
     <!-- <script id="legend" src="viz/legend.json" type="application/json"></script> -->
     <script type="module">
+// *********   Shift+click on node > center view on node
+// *********   Rightclick on node > travel to node
+// *********   Ctrl > (de)activate hover
+// *********   Doubleclick on screen > fit graph to screen
+
+
       import { UnrealBloomPass } from '//unpkg.com/three/examples/jsm/postprocessing/UnrealBloomPass.js';
       // import { AfterimagePass  } from '//unpkg.com/three/examples/jsm/postprocessing/AfterimagePass.js';
       const elem = document.getElementById('3d-graph');
@@ -319,11 +325,13 @@
             rclickedNode = null;
           } else {
             rclickedNode = node;
-            Graph.cameraPosition(
-            {  }, // new position
-            node, // lookAt ({ x, y, z })
-            500  // ms transition duration
-          );
+            if(event.shiftKey) {
+              Graph.cameraPosition(
+                {  }, // new position
+                node, // lookAt ({ x, y, z })
+                1000  // ms transition duration
+              );
+            }
           }
 
           focus_on(node);
