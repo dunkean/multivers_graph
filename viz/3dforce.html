@@ -69,7 +69,7 @@
       var link_unreached_visible = false;
       var node_unreached_visible = true;
       var attrib_filter = ''
-      var hover_activated = false;
+      var hover_activated = true;
       var three_objects = {}
 
       $.getJSON("viz/legend.json", function(json) {
@@ -123,6 +123,7 @@
           if (hoverNode.id == node.id) return '#FF0000';
           else if ((hover_activated || rclickedNode) && highlightNodes.has(node.id)) return '#FF3333';
           else if ((hover_activated || rclickedNode) && pathNodes.has(node.id)) return '#11DD11';
+          else if ((hover_activated || rclickedNode) && hpathNodes.has(node.id)) return '#DD55DD';
         }
         if (node.reached == 1) {
           return '#ede68a';
@@ -321,7 +322,7 @@
             Graph.cameraPosition(
             {  }, // new position
             node, // lookAt ({ x, y, z })
-            1500  // ms transition duration
+            500  // ms transition duration
           );
           }
 
@@ -370,12 +371,13 @@
           txt += "<b><span style='font-size: 120%; color:#5555FF'>E</span></b>:  " + Graph.graphData().nodes.find(obj => { return obj.id === node.neighbors[2] }).name + "<br>";
           txt += "<b><span style='font-size: 120%; color:#0099FF'>A</span></b>:  " + Graph.graphData().nodes.find(obj => { return obj.id === node.neighbors[3] }).name + "<br><br>";
           txt +="<br>";
-          txt += "<b>Plus court:</b>:  " + node.s_path.length + "<br>";
+
+          txt += "<b><span style='color:#11DD11'>Plus court:</span></b>:  " + node.s_path.length + "<br>";
           if(node.h_path.length !=  node.hs_path_kn.length)
-            txt += "<b>Plus simple:</b>:  " + node.hs_path_unkn.length + " + " + node.hs_path_kn.length + "<br>";
+            txt += "<b><span style='color:#DD55DD'>Plus simple:</span></b>:  " + node.hs_path_unkn.length + " + " + node.hs_path_kn.length + "<br>";
           if(node.h_path.length > 0)
             txt += "<b>Connu:</b>:  " + node.h_path.length + "<br>";
-          txt += "<b>Node: " + node.id + ' (' +  Graph.graphData().nodes.filter((obj) => obj.reached == '1').length 
+          txt += "<br><b>Node: " + node.id + ' (' +  Graph.graphData().nodes.filter((obj) => obj.reached == '1').length 
             + "/" + Graph.graphData().nodes.length + ')<br>';
           txt += "<b>Links: " + 
             Graph.graphData().links.filter((obj) => obj.unreached == '0' && (obj.source.id == node.id || obj.target.id == node.id) ).length
