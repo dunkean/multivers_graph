@@ -66,6 +66,8 @@
       var link_unreached_visible = false;
       var node_unreached_visible = true;
       var attrib_filter = ''
+      var hover_activated = false;
+      var three_objects = {}
 
       $.getJSON("viz/legend.json", function(json) {
           legend = json;
@@ -81,6 +83,23 @@
             });
           });
       });
+
+      $(document).bind("keyup keydown", function (e) {
+        if (e.ctrlKey) {
+          hover_activated = !hover_activated;
+        }
+      });
+
+      function get_node_name_obj(node) {
+        if(node.id in three_objects)
+          return three_objects[node.id];
+
+        const sprite = new SpriteText(`${node.name}` + '\n\n\n');
+        sprite.color = 'lightgrey';
+        sprite.textHeight = 9;
+        three_objects[node.id] = sprite
+        return sprite;
+      }
   
       function get_color_from_legend(node) {
         let value = node.planet[node_color_filter][0];
@@ -101,8 +120,8 @@
         
         if (hoverNode) {
           if (hoverNode.id == node.id) return '#FF11AA';
-          else if (pathNodes.has(node.id)) return '#11DD11';
-          else if (highlightNodes.has(node.id)) return '#FF3333';
+          else if ((hover_activated || rclickedNode) && pathNodes.has(node.id)) return '#11DD11';
+          else if ((hover_activated || rclickedNode) && highlightNodes.has(node.id)) return '#FF3333';
         }
         if (node.reached == 1) {
           return '#ede68a';
@@ -192,32 +211,11 @@
         })
         .nodeThreeObjectExtend(true)
         .nodeThreeObject(node => {
-          if(rclickedNode) {
-            if (!( highlightNodes.has(node.id)
-                  || node.neighbors.some((neigh)=>highlightNodes.has(neigh))
-                  || hpathNodes.has(node.id) 
-                  || pathNodes.has(node.id))) {
-                    return null;
-                  }
-                  
-          }
           if(node.reached == 0 && !rclickedNode) return null;
-
-          const sprite = new SpriteText(`${node.name}` + '\n\n\n');
-          sprite.color = 'lightgrey';
-          sprite.textHeight = 9;
-          return sprite;
+          return get_node_name_obj(node);
         })
-        // .nodeThreeObject((node) => 
-        //   new THREE.Mesh(new THREE.SphereGeometry(node_size(node)),
-        //           new THREE.MeshLambertMaterial({
-        //             color: node_color(node),
-        //             transparent: true,
-        //             opacity: 0.75
-        //           })))
-
         .linkColor(link => {
-          if (hoverNode) {
+          if (hoverNode && (hover_activated || rclickedNode)) {
             if ((pathNodes.has(link.source.id) && pathNodes.has(link.target.id))) {
               if (link.unreached == 0) 
                 return "#77FFAA";
@@ -231,37 +229,23 @@
         })
 
         .linkVisibility(link => {
-          if(!link_unreached_visible && link['unreached'] == 1)
-            return false;
-          if(!link_reached_visible && link['unreached'] == 0)
-            return false;
-
-          if(rclickedNode != null) {
+         if(rclickedNode != null || ( hoverNode != null && hover_activated) ) {
             if(highlightNodes.has(link.source.id) && hoverNode.id == link.target.id)
               return true;
             if(highlightNodes.has(link.target.id) && hoverNode.id == link.source.id)
-              return true;      
-            
-            if(rclickedNode.neighbors.includes(link.target.id) || rclickedNode.neighbors.includes(link.source.id))
               return true;
-            
+            if(hoverNode.neighbors.includes(link.target.id) || hoverNode.neighbors.includes(link.source.id))
+              return true;
             if((pathNodes.has(link.source.id) && pathNodes.has(link.target.id)))
               return true;
-
-            //// filtering shortcuts in the graph
-            // for (let i = 1; i < hpathNodes.length; i++) {
-            //   if(link.source.id == hpathNodes[i-1] && link.target.id == hpathNodes[i])            
-            //     return true;
-            //   if(link.source.id == hpathNodes[i] && link.target.id == hpathNodes[i-1])            
-            //     return true;
-            // }
             if((hpathNodes.has(link.source.id) && hpathNodes.has(link.target.id)))
               return true;
               
-            return false;
+            if (rclickedNode != null)
+              return false;
           }
 
-          if(link.unreached == 1) {
+          if(link.unreached == 1 && ( hoverNode != null && hover_activated)) {
             if(highlightNodes.has(link.source.id) && hoverNode.id == link.target.id)
               return true;
             if(highlightNodes.has(link.target.id) && hoverNode.id == link.source.id)
@@ -270,17 +254,37 @@
               return true;
             return link_unreached_visible;  
           } 
+
+          if(!link_unreached_visible && link['unreached'] == 1)
+            return false;
+          if(!link_reached_visible && link['unreached'] == 0)
+            return false;
           
           return true;
         })
+
         .nodeVisibility(node => {
+          if(node.id == 0) return true;
+          if(rclickedNode != null) {
+            return highlightNodes.has(node.id)
+                  || node.neighbors.some((neigh)=>highlightNodes.has(neigh))
+                  || hpathNodes.has(node.id) 
+                  || pathNodes.has(node.id);
+          }
+
+          if(hoverNode && hover_activated) {
+            if (highlightNodes.has(node.id)
+                  || node.neighbors.some((neigh)=>highlightNodes.has(neigh))
+                  || hpathNodes.has(node.id) 
+                  || pathNodes.has(node.id))
+                  return true;
+          }
+
           if(!node_unreached_visible && node['reached'] == 0)
             return false;
           if(!node_reached_visible && node['reached'] == 1)
             return false;
 
-          if(node.id == 0) return true;
-          
           if(attrib_filter != ''){
             let cat = node_color_filter;
             if (node_color_filter == "Standard")
@@ -289,17 +293,6 @@
               return false;            
           }
 
-          if(rclickedNode != null) {
-            return highlightNodes.has(node.id)
-                  || node.neighbors.some((neigh)=>highlightNodes.has(neigh))
-                  || hpathNodes.has(node.id) 
-                  || pathNodes.has(node.id);
-            // return node.neighbors.some((neigh)=>highlightNodes.has(neigh))
-            //       || node.neighbors.some((neigh)=>pathNodes.has(neigh))
-            //       || highlightNodes.has(node.id) 
-            //       || hpathNodes.has(node.id) 
-            //       || pathNodes.has(node.id);
-          }
           return true;
         })
         .nodeVal(node => scale_factor * (node.reached == 1 ? (node.id == 0 ? 30 : 4) : 2))
@@ -310,7 +303,6 @@
 
           elem.style.cursor = node ? 'pointer' : null
           if(!rclickedNode) {
-            
             focus_on(node)
           }
         })
@@ -356,6 +348,11 @@
           if(node_color_filter != "Standard") {
             txt += "<h2><b>" + node.planet[node_color_filter].join(', ') + "</b></h2>";
           }
+          // console.log(node.s_path)
+          txt += "<b>Plus court:</b>:  " + node.s_path.length + "<br>";
+          txt += "<b>Plus simple:</b>:  " + node.hs_path.length + "<br>";
+          if(node.h_path.length > 0)
+            txt += "<b>Connu:</b>:  " + node.h_path.length + "<br>";
           return txt;
         }
 
@@ -399,6 +396,10 @@
           Graph
             .nodeColor(Graph.nodeColor())
             .linkWidth(Graph.linkWidth())
+            .nodeThreeObject(node => {
+                if(node.reached == 0 && !rclickedNode) return null;
+                return get_node_name_obj(node);
+              })
             .linkDirectionalParticles(Graph.linkDirectionalParticles());
         }
 

@@ -194,9 +194,9 @@ def path_weight(G, path):
 
 
 random.seed(666)
-N = 800
+N = 50
 K = 4
-reach_proba = 0.45
+reach_proba = 0.35
 # Graph
 G = nx.random_regular_graph(K,N, seed=30)
 print("Graph done")
