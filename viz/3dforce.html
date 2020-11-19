@@ -6,9 +6,10 @@
     <script src="//unpkg.com/three-spritetext"></script>
     <!--<script src="../../dist/3d-force-graph.js"></script>-->
     <link rel="stylesheet" href="viz/style.css">
+    <script type="text/javascript" language="javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>  
   </head>
   
-  <body>
+  <body style="background-color:black;">
     
     <div id="3d-graph"></div>
     <div class="dimensions-selector">
@@ -22,16 +23,20 @@
         <input type="radio" name="color_radio" id='Inh'> Inhabitants
         <input type="radio" name="color_radio" id='Reaction'> Social
     </div>
+    <div class="graph-legend">
+      <span id="graph-data-legend"></span>
+    </div>
     <div class="graph-data">
         <span id="graph-data-description"></span>
     </div>
 
 
+
+    <!-- <script id="legend" src="viz/legend.json" type="application/json"></script> -->
     <script type="module">
       import { UnrealBloomPass } from '//unpkg.com/three/examples/jsm/postprocessing/UnrealBloomPass.js';
       // import { AfterimagePass  } from '//unpkg.com/three/examples/jsm/postprocessing/AfterimagePass.js';
       const elem = document.getElementById('3d-graph');
-
 
 
       const pathNodes = new Set();
@@ -40,8 +45,15 @@
       let hoverNode = null;
       let rclickedNode = null;
       let scale_factor = 1;
-      let node_color_filter = "Standard"
-      
+      let node_color_filter = "Standard";
+      var legend = null;
+
+      $.getJSON("viz/legend.json", function(json) {
+          legend = json;
+          document.getElementById('graph-data-legend').innerHTML = get_legend(node_color_filter);
+      });
+  
+
       function node_color(node){
         if(node.id == 0) return '#FFDD33';
 
@@ -59,13 +71,29 @@
           return '#ede68a';
         }
 
-        return '#222831';
+        return node["dark"]
+        // return '#222831';
+      }
+
+      function get_legend(key) {
+        if (key == 'Standard') {
+          key = 'dark'
+        }
+        if(key == '') return ''
+        var txt = "";
+        for (let i in legend[key]) {
+          txt += "<div class='legend-box' style='background-color:" + legend[key][i][1] + "'></div><b class='legend-txt'> " + legend[key][i][0] + "</b>  ";
+        }
+        return txt;
       }
 
       if (document.querySelector('input[name="color_radio"]')) {
         document.querySelectorAll('input[name="color_radio"]').forEach((elem) => {
           elem.addEventListener("change", function(event) {
             node_color_filter = event.target.id;
+            if(legend != null) {
+              document.getElementById('graph-data-legend').innerHTML = get_legend(node_color_filter);
+            }
             updateHighlight();
           });
         });
@@ -231,11 +259,11 @@
           if(!node) return ''
           if(node.id == 0) return "<h2><b> La Terre </b></h2>"
           var txt = "<h2><b>" + node.name + "</b></h2>";
-          txt += "<p style='text-align:left'>";
+          // txt += "<p style='text-align:left'>";
           for (let key in node.planet) {
             txt += "<b>" + key + "</b>:  " + node.planet[key].join(', ') + "<br>";
           }
-          txt += "</p>";
+          // txt += "</p>";
           if(node_color_filter != "Standard") {
             txt += "<h2><b>" + node.planet[node_color_filter].join(', ') + "</b></h2>";
           }

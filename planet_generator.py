@@ -4,8 +4,10 @@ import random
 from operator import itemgetter
 from matplotlib import cm
 import sys
+import json
 
-colormap = cm.get_cmap('Paired').colors
+colormap = cm.get_cmap('jet')
+
 attrib_file = open("attributes.txt", encoding="utf8")
 lines = attrib_file.readlines()
 attrs = []
@@ -20,6 +22,31 @@ for i in range(int(len(lines)/4)):
         'choice_prob': [float(p) for p in lines[idx+3].strip().split(',')] 
     })
 
+legend = {}
+for attr in attrs:
+    title = attr['title'] 
+    legend[title] = []
+    if title == 'Reaction':
+        legend['dark'] = []
+
+    for i, key in enumerate(attr['keys']):
+        color = colormap(i/len(attr['keys']))
+        if i == 0:
+            color = [0.46,0.13,0.46]
+        ctxt = "rgb(" + str(color[0] * 200) + "," + str(color[1] * 200) + "," + str(color[2] * 200) + ")"
+        legend[title].append([key,ctxt])
+        if attr['title'] == "Reaction":
+            ctxt2 = "rgb(" + str(color[0] * 120) + "," + str(color[1] * 120) + "," + str(color[2] * 120) + ")"
+            legend['dark'].append([key,ctxt2])
+
+json_object = json.dumps(legend, indent = 4) 
+  
+# Writing to sample.json 
+with open("viz/legend.json", "w") as outfile: 
+    outfile.write(json_object) 
+
+# sys.exit(0)
+
 def random_planet():
     planet = {}
     colored_planet = {}
@@ -28,7 +55,9 @@ def random_planet():
         multi = attr['prob_multi']
         index = random.choices(range(len(attr['keys'])), attr['choice_prob'])[0]
         attribs.append(attr['keys'][index])
-        color = colormap[index]
+        color = colormap(index/len(attr['keys']))
+        if index == 0:
+             color = [0.46,0.13,0.46]
         while random.random() < multi:
             index = random.choices(range(len(attr['keys'])), attr['choice_prob'])[0]
             att = attr['keys'][index]
@@ -36,6 +65,9 @@ def random_planet():
                 attribs.append(att)
         planet[attr['title']] = attribs
         ctxt = "rgb(" + str(color[0] * 128) + "," + str(color[1] * 128) + "," + str(color[2] * 128) + ")"
+        if attr['title'] == "Reaction":
+            ctxt2 = "rgb(" + str(color[0] * 40) + "," + str(color[1] * 40) + "," + str(color[2] * 40) + ")"
+            colored_planet['dark'] = ctxt2
         colored_planet[attr['title']] = ctxt
     return planet, colored_planet
 
