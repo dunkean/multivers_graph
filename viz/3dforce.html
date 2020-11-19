@@ -12,7 +12,7 @@
   <body style="background-color:black;">
     
     <div id="3d-graph"></div>
-    <div class="dimensions-selector">
+    <div class="color-selector">
         <input type="radio" name="color_radio" id='Standard' checked> Reached
         <input type="radio" name="color_radio" id='Techno'> Techno
         <input type="radio" name="color_radio" id='Flux'> Flux
@@ -28,6 +28,19 @@
     </div>
     <div class="graph-data">
         <span id="graph-data-description"></span>
+    </div>
+    <div class="visible-selector">
+      <div class="node-visible-selector">
+        Nodes
+        <input type="checkbox" name='node_vis_box' id='Reached' checked> Reached
+        <input type="checkbox" name='node_vis_box' id='Unreached' checked> Unreached
+      </div>
+      <div class="link-visible-selector">
+        Links
+        <input type="checkbox" name='link_vis_box' id='Reached' checked> Reached
+        <input type="checkbox" name='link_vis_box' id='Unreached'> Unreached
+      </div>
+
     </div>
 
 
@@ -48,17 +61,41 @@
       let node_color_filter = "Standard";
       var legend = null;
 
+      var link_reached_visible = true;
+      var node_reached_visible = true;
+      var link_unreached_visible = false;
+      var node_unreached_visible = true;
+      var attrib_filter = ''
+
       $.getJSON("viz/legend.json", function(json) {
           legend = json;
           document.getElementById('graph-data-legend').innerHTML = get_legend(node_color_filter);
+          document.querySelectorAll('div.legend-box').forEach((box) => {
+            box.addEventListener("click", function(event) {
+              let new_filter = event.srcElement.id;
+              if(new_filter == attrib_filter)
+                attrib_filter = '';
+              else
+                attrib_filter = new_filter;
+                updateHighlight();
+            });
+          });
       });
   
+      function get_color_from_legend(node) {
+        let value = node.planet[node_color_filter][0];
+        for (let i in legend[node_color_filter]) {
+          if(legend[node_color_filter][i][0] == value)
+            return legend[node_color_filter][i][1];
+        }
+      }
 
       function node_color(node){
         if(node.id == 0) return '#FFDD33';
 
         if(node_color_filter != "Standard") {
-          let color = node[node_color_filter];
+          return get_color_from_legend(node);
+          // let color = node[node_color_filter];
           return color;
         }
         
@@ -82,23 +119,53 @@
         if(key == '') return ''
         var txt = "";
         for (let i in legend[key]) {
-          txt += "<div class='legend-box' style='background-color:" + legend[key][i][1] + "'></div><b class='legend-txt'> " + legend[key][i][0] + "</b>  ";
+          txt += "<div class='legend-box' id='" +  legend[key][i][0] + "' style='background-color:" 
+              + legend[key][i][1] + "'></div><b class='legend-txt'> " + legend[key][i][0] + "</b>  ";
         }
         return txt;
       }
 
-      if (document.querySelector('input[name="color_radio"]')) {
-        document.querySelectorAll('input[name="color_radio"]').forEach((elem) => {
-          elem.addEventListener("change", function(event) {
-            node_color_filter = event.target.id;
-            if(legend != null) {
-              document.getElementById('graph-data-legend').innerHTML = get_legend(node_color_filter);
-            }
-            updateHighlight();
-          });
+      // if (document.querySelector('input[name="color_radio"]')) {
+      document.querySelectorAll('input[name="color_radio"]').forEach((elem) => {
+        elem.addEventListener("change", function(event) {
+          node_color_filter = event.target.id;
+          attrib_filter = '';
+          if(legend != null) {
+            document.getElementById('graph-data-legend').innerHTML = get_legend(node_color_filter);
+            document.querySelectorAll('div.legend-box').forEach((box) => {
+              box.addEventListener("click", function(event) {
+                let new_filter = event.srcElement.id;
+                if(new_filter == attrib_filter)
+                  attrib_filter = '';
+                else
+                  attrib_filter = new_filter;
+                  updateHighlight();
+              });
+            });
+          }
+          updateHighlight();
         });
-      }
+      });
+      // }
 
+      document.querySelectorAll('input[name="node_vis_box"]').forEach((elem) => {
+        elem.addEventListener("change", function(event) {
+          let type = event.target.id;
+          if(type == 'Reached') node_reached_visible = event.srcElement.checked;
+          if(type == 'Unreached') node_unreached_visible = event.srcElement.checked;
+          updateHighlight();
+        });
+      });
+
+      document.querySelectorAll('input[name="link_vis_box"]').forEach((elem) => {
+        elem.addEventListener("change", function(event) {
+          let type = event.target.id;
+          if(type == 'Reached') link_reached_visible = event.srcElement.checked;
+          if(type == 'Unreached') link_unreached_visible = event.srcElement.checked;
+          updateHighlight();
+        });
+      });
+      
       function node_opacity(node){
         if(node.id == 0) return 1;
         
@@ -160,10 +227,15 @@
             } else if((hpathNodes.has(link.source.id) && hpathNodes.has(link.target.id)))
               return "#DD55DD";
           }
-          return link.unreached == 1 ? '#23103A' : ( (node_color_filter != "Standard") ? '#333333' : '#14ffec');         
+          return link.unreached == 1 ? '#333333' : ( (node_color_filter != "Standard") ? '#333333' : '#14ffec');         
         })
 
         .linkVisibility(link => {
+          if(!link_unreached_visible && link['unreached'] == 1)
+            return false;
+          if(!link_reached_visible && link['unreached'] == 0)
+            return false;
+
           if(rclickedNode != null) {
             if(highlightNodes.has(link.source.id) && hoverNode.id == link.target.id)
               return true;
@@ -176,6 +248,7 @@
             if((pathNodes.has(link.source.id) && pathNodes.has(link.target.id)))
               return true;
 
+            //// filtering shortcuts in the graph
             // for (let i = 1; i < hpathNodes.length; i++) {
             //   if(link.source.id == hpathNodes[i-1] && link.target.id == hpathNodes[i])            
             //     return true;
@@ -184,6 +257,7 @@
             // }
             if((hpathNodes.has(link.source.id) && hpathNodes.has(link.target.id)))
               return true;
+              
             return false;
           }
 
@@ -194,12 +268,27 @@
               return true;  
             if((pathNodes.has(link.source.id) && pathNodes.has(link.target.id)))
               return true;
-            return false;  
+            return link_unreached_visible;  
           } 
           
           return true;
         })
         .nodeVisibility(node => {
+          if(!node_unreached_visible && node['reached'] == 0)
+            return false;
+          if(!node_reached_visible && node['reached'] == 1)
+            return false;
+
+          if(node.id == 0) return true;
+          
+          if(attrib_filter != ''){
+            let cat = node_color_filter;
+            if (node_color_filter == "Standard")
+              cat = "Reaction";
+            if(!node['planet'][cat].includes(attrib_filter))
+              return false;            
+          }
+
           if(rclickedNode != null) {
             return highlightNodes.has(node.id)
                   || node.neighbors.some((neigh)=>highlightNodes.has(neigh))

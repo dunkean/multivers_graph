@@ -1,7 +1,7 @@
 0,Techno
 Préhistoire,Antiquité,Moyen Age,Renaissance,Préindustriel,Moderne,Futuriste,Cyberpunk,Post-apocalyptique,IA,Singularité
 B,D,F,J,K,L,M,N,S,T,V
-30,100,300,50,10,5,2,2,5,0.2,0.2
+30,100,300,50,10,5,1,0.5,2,0.2,0.2
 0,Flux
 Stérile,Endormi,Prophètes,Cultes,Pervasive,Eveillé,Panthéon,Apocalypse
 B,D,L,M,N,P,X,Z

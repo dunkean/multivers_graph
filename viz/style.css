@@ -4,14 +4,21 @@ body {
     margin: 0;
 }
 
-.dimensions-selector, .graph-data {
+.color-selector, .graph-data {
     position: absolute;
     top: 0;
     padding: 5px;
     color: slategrey;
 }
 
-.dimensions-selector, .graph-legend {
+.visible-selector {
+    position: absolute;
+    bottom: 0;
+    padding: 5px;
+    color: slategrey;
+}
+
+.color-selector, .graph-legend {
     position: absolute;
     top: 0;
     padding: 5px;
@@ -19,7 +26,7 @@ body {
 }
 
 
-.dimensions-selector {
+.color-selector {
     left: 0;
 }
 
@@ -64,7 +71,7 @@ body {
     width: 20px;
     height: 20px;
     border:1px solid;
-    border-color: teal;
+    border-color: rgb(129, 129, 129);
     border-radius: 6px;
 }
 
