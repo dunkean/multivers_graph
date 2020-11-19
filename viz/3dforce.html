@@ -203,7 +203,7 @@
       function node_size(node){
         return scale_factor * (node.reached == 1 ? (node.id == 0 ? 30 : 4) : 2);
       }
-
+      
       const Graph = ForceGraph3D()(elem)
         .jsonUrl('viz/multivers.json')
         .nodeColor(node => {
@@ -336,6 +336,8 @@
         })//window.open(`https://bl.ocks.org/${node.user}/${node.id}`, '_blank'));
         .onLinkClick(link => console.log(link));
 
+      
+
         function get_txt(node) {
           if(!node) return ''
           if(node.id == 0) return "<h2><b> La Terre </b></h2>"
@@ -356,6 +358,12 @@
             txt += "<b>Plus simple:</b>:  " + node.hs_path_unkn.length + " + " + node.hs_path_kn.length + "<br>";
           if(node.h_path.length > 0)
             txt += "<b>Connu:</b>:  " + node.h_path.length + "<br>";
+          txt += "<b>Node: " + node.id + ' (' +  Graph.graphData().nodes.filter((obj) => obj.reached == '1').length 
+            + "/" + Graph.graphData().nodes.length + ')<br>';
+          txt += "<b>Links: " + 
+            Graph.graphData().links.filter((obj) => obj.unreached == '0' && (obj.source.id == node.id || obj.target.id == node.id) ).length
+            + ' (' +  Graph.graphData().links.filter((obj) => obj.unreached == '0').length 
+            + "/" + Graph.graphData().links.length + ')';
           return txt;
         }
 
@@ -396,6 +404,7 @@
 
 
         function updateHighlight() {
+          // console.log(Graph.graphData().nodes.length)
           Graph
             .nodeColor(Graph.nodeColor())
             .linkWidth(Graph.linkWidth())
