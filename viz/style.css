@@ -38,6 +38,7 @@ body {
     width: 200px;
     margin: 20px;
     margin-top: 5px;
+    background-color: transparent;
 }
 
 .graph-legend {

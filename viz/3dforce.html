@@ -9,7 +9,7 @@
     <script type="text/javascript" language="javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>  
   </head>
   
-  <body style="background-color:black;">
+  <body style="background-color:rgb(129, 125, 100);">
     
     <div id="3d-graph"></div>
     <div class="color-selector">
@@ -63,7 +63,8 @@
 
       const pathNodes = new Set();
       const hpathNodes = new Set();
-      const highlightNodes = new Set();
+      const hspathNodes = new Set();
+      const neighborNodes = new Set();
       let hoverNode = null;
       let rclickedNode = null;
       let scale_factor = 1;
@@ -121,16 +122,19 @@
       function node_color(node){
         if(node.id == 0) return '#FFDD33';
 
-        if(node_color_filter != "Standard") {
-          return get_color_from_legend(node, node_color_filter);
-        }
         
         if (hoverNode) {
           if (hoverNode.id == node.id) return '#FF0000';
-          else if ((hover_activated || rclickedNode) && highlightNodes.has(node.id)) return '#FF3333';
+          else if ((hover_activated || rclickedNode) && neighborNodes.has(node.id)) return '#FF3333';
           else if ((hover_activated || rclickedNode) && pathNodes.has(node.id)) return '#11DD11';
           else if ((hover_activated || rclickedNode) && hpathNodes.has(node.id)) return '#DD55DD';
+          else if ((hover_activated || rclickedNode) && hspathNodes.has(node.id)) return '#5555DD';
         }
+
+        if(node_color_filter != "Standard") {
+          return get_color_from_legend(node, node_color_filter);
+        }
+
         if (node.reached == 1) {
           return '#ede68a';
         }
@@ -191,21 +195,6 @@
           updateHighlight();
         });
       });
-      
-      function node_opacity(node){
-        if(node.id == 0) return 1;
-        
-        if (hoverNode) {
-          if (hoverNode.id == node.id) return 1;
-          else if (pathNodes.has(node.id)) return 1;
-          else if (highlightNodes.has(node.id)) return 1;
-        }
-        if (node.reached == 1) {
-          return 1;
-        }
-
-        return 0.6;
-      }
 
       function node_size(node){
         return scale_factor * (node.reached == 1 ? (node.id == 0 ? 30 : 4) : 2);
@@ -238,21 +227,25 @@
             }
             else if((hpathNodes.has(link.source.id) && hpathNodes.has(link.target.id)))
               return "#DD55DD";
+            else if((hspathNodes.has(link.source.id) && hspathNodes.has(link.target.id)))
+              return "#5555DD";
           }
           return link.unreached == 1 ? '#333333' : ( (node_color_filter != "Standard") ? '#333333' : '#14ffec');         
         })
 
         .linkVisibility(link => {
          if(rclickedNode != null || ( hoverNode != null && hover_activated) ) {
-            if(highlightNodes.has(link.source.id) && hoverNode.id == link.target.id)
+            if(neighborNodes.has(link.source.id) && hoverNode.id == link.target.id)
               return true;
-            if(highlightNodes.has(link.target.id) && hoverNode.id == link.source.id)
+            if(neighborNodes.has(link.target.id) && hoverNode.id == link.source.id)
               return true;
-            if(hoverNode.neighbors.includes(link.target.id) || hoverNode.neighbors.includes(link.source.id))
-              return true;
+            // if(hoverNode.neighbors.includes(link.target.id) || hoverNode.neighbors.includes(link.source.id))
+            //   return true;
             if((pathNodes.has(link.source.id) && pathNodes.has(link.target.id)))
               return true;
             if((hpathNodes.has(link.source.id) && hpathNodes.has(link.target.id)))
+              return true;
+            if((hspathNodes.has(link.source.id) && hspathNodes.has(link.target.id)))
               return true;
               
             if (rclickedNode != null)
@@ -260,11 +253,13 @@
           }
 
           if(link.unreached == 1 && ( hoverNode != null && hover_activated)) {
-            if(highlightNodes.has(link.source.id) && hoverNode.id == link.target.id)
+            if(neighborNodes.has(link.source.id) && hoverNode.id == link.target.id)
               return true;
-            if(highlightNodes.has(link.target.id) && hoverNode.id == link.source.id)
+            if(neighborNodes.has(link.target.id) && hoverNode.id == link.source.id)
               return true;  
             if((pathNodes.has(link.source.id) && pathNodes.has(link.target.id)))
+              return true;
+            if((hspathNodes.has(link.source.id) && hspathNodes.has(link.target.id)))
               return true;
             return link_unreached_visible;  
           } 
@@ -280,16 +275,20 @@
         .nodeVisibility(node => {
           if(node.id == 0) return true;
           if(rclickedNode != null) {
-            return highlightNodes.has(node.id)
-                  || node.neighbors.some((neigh)=>highlightNodes.has(neigh))
+            return neighborNodes.has(node.id)
+                  || neighborNodes.has(node.id) 
+                  // || node.neighbors.some((neigh)=>neighborNodes.has(neigh))
                   || hpathNodes.has(node.id) 
+                  || hspathNodes.has(node.id) 
                   || pathNodes.has(node.id);
           }
 
           if(hoverNode && hover_activated) {
-            if (highlightNodes.has(node.id)
-                  || node.neighbors.some((neigh)=>highlightNodes.has(neigh))
+            if (neighborNodes.has(node.id)
+                  || neighborNodes.has(node.id) 
+                  // || node.neighbors.some((neigh)=>neighborNodes.has(neigh))
                   || hpathNodes.has(node.id) 
+                  || hspathNodes.has(node.id) 
                   || pathNodes.has(node.id))
                   return true;
           }
@@ -313,7 +312,7 @@
         // .nodeOpacity(node => node.unreached == 1 ? 0.3 : 0.6)
         .nodeLabel(node => `${node.name}`)
         .onNodeHover(node => {
-          if ((!node && !highlightNodes.size) || (node && hoverNode === node)) return;
+          if ((!node && !neighborNodes.size) || (node && hoverNode === node)) return;
 
           elem.style.cursor = node ? 'pointer' : null
           if(!rclickedNode) {
@@ -337,8 +336,8 @@
           focus_on(node);
         })
         .linkOpacity(1)
-        .linkWidth(link => scale_factor *  (link.unreached == 1 ? 0.75 : 1.5))
         .nodeOpacity(1)
+        .linkWidth(link => scale_factor *  (link.unreached == 1 ? 0.75 : 1.5))
         .linkDirectionalParticles((link)=> link.unreached == 1 ? 0 : 3)
         .linkDirectionalParticleSpeed(0.01)
         .linkDirectionalParticleWidth(scale_factor * 5)
@@ -395,28 +394,30 @@
         }
 
         function focus_on(node) {
-          highlightNodes.clear();
+          neighborNodes.clear();
           pathNodes.clear();
           hpathNodes.clear();
+          hspathNodes.clear();
           if (node) {
-            highlightNodes.add(node.id);
-            node.neighbors.forEach(neighbor => highlightNodes.add(neighbor));
+            neighborNodes.add(node.id);
+            node.neighbors.forEach(neighbor => neighborNodes.add(neighbor));
             node.s_path.forEach(n => pathNodes.add(n));
             // node.h_path.forEach(n => hpathNodes.add(n));
             node.hs_path.forEach(n => hpathNodes.add(n));
+            node.h_path.forEach(n => hspathNodes.add(n));
             document.getElementById('graph-data-description').innerHTML = get_txt(node);
           }
           hoverNode = node || null;
           updateHighlight();
         }
 
+        // Graph.scene().background = new THREE.Color( 0x222222 );
         const bloomPass = new UnrealBloomPass();
         bloomPass.strength = 1.5;
         bloomPass.radius = 0.4;
         bloomPass.threshold = 0.2;
         Graph.postProcessingComposer().addPass(bloomPass);
               
-        
         // const loader = new THREE.CubeTextureLoader();
         // const texture = loader.load([
         //   'viz/sky_neg_x.jpg',
