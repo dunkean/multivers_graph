@@ -33,26 +33,37 @@ def norm_mesh(mesh, height):
     A = transforms3d.affines.compose(T, R(), Z)
     mesh.apply_transform(A)
 
-def cube_mesh(size, t=[0,0,0]):    
+def mesh_cube(size, t=[0,0,0]):    
     cube = trimesh.creation.box(size)
     cube.apply_transform(T(size[1],t))
     return cube
 
-def sphere_mesh(radius, t=[0,0,0]):    
+def mesh_sphere(radius, t=[0,0,0]):    
     cube = trimesh.creation.icosphere(1, radius)
     cube.apply_transform(T(radius,t))
     return cube
 
 
 
-# woman = trimesh.load("woman.obj")
-man = trimesh.load("man.obj")
+man = trimesh.load("woman.obj")
+# man = trimesh.load("man.obj")
 norm_mesh(man, 1.8)
 print("Model loaded and normalized")
-head = sub_mesh_sphere(man,0.15, (0,1.6,0.03))
-print("Intersection done")
-man_vox = head.voxelized(pitch=0.005)
-print("Voxels generated")
+man_vox = man.voxelized(pitch=0.01)
+envelope_points = man_vox.points.copy()
+print(len(envelope_points), envelope_points.shape)
+man_vox.fill()
+all_points = man_vox.points
+print(len(all_points), all_points.shape)
+
+inner_points = list(set(all_points) - set(envelope_points))
+
+# print("Voxels generated")
+
+# head = sub_mesh_sphere(man,0.15, (0,1.6,0.03))
+# print("Intersection done")
+
+# head = sub_mesh_sphere(man,0.15, (0,1.6,0.03))
 # lfeet = sub_mesh_cube(man, (0.3,0.13,0.4), (-0.2,0,0))
 # rfeet = sub_mesh_cube(man, (0.3,0.13,0.4), (0.2,0,0))
 # lleg = sub_mesh_cube(man, (0.3,0.7,0.3), (0.16,0.1,0))
@@ -64,12 +75,23 @@ print("Voxels generated")
 # neck = sub_mesh_cube(man, (0.15,0.1,0.15), (0,1.5,0))
 # brain = sub_mesh_sphere(man, 0.095, (0,1.68,0.01))
 
-# rleg = sub_mesh_cube((0.3,0.7,0.3), -0.16, 0.1)
 
+# rleg = sub_mesh_cube((0.3,0.7,0.3), -0.16, 0.1)
 # cube = cube_mesh((0.15,0.1,0.15), (0,1.5,0))
 # cube = sphere_mesh(0.095, (0,1.68,0.01))
-scene = trimesh.Scene([man_vox])
-# scene = trimesh.Scene([man,cube])
+
+# head_box = mesh_sphere(0.15, (0,1.6,0.03))
+# contained = man.contains(man_vox.points)
+# in_points = [man_vox.points[i] for i in range(len(contained)) if contained[i] == True ]
+# print("Contains done", len(in_points))
+
+# cloud_original = trimesh.points.PointCloud(man.sample(5000))
+cloud_out = trimesh.points.PointCloud(man.vertices)
+cloud_in = trimesh.points.PointCloud(inner_points)
+# man_vox = cloud_original.voxelized(pitch=0.02)
+scene = trimesh.Scene([cloud_out, cloud_in])
+print("Scene build")
+# scene = trimesh.Scene([man,cloud_original])
 
 scene.show()
 
