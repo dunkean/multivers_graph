@@ -43,20 +43,21 @@ def mesh_sphere(radius, t=[0,0,0]):
     cube.apply_transform(T(radius,t))
     return cube
 
+def _hash(a):
+        return hash(a.tobytes())
 
-
-man = trimesh.load("woman.obj")
-# man = trimesh.load("man.obj")
+# man = trimesh.load("woman.obj")
+man = trimesh.load("man.obj")
 norm_mesh(man, 1.8)
 print("Model loaded and normalized")
-man_vox = man.voxelized(pitch=0.01)
+man_vox = man.voxelized(pitch=0.03)
 envelope_points = man_vox.points.copy()
-print(len(envelope_points), envelope_points.shape)
+# print(len(envelope_points), envelope_points.shape)
 man_vox.fill()
-all_points = man_vox.points
-print(len(all_points), all_points.shape)
+# all_points = man_vox.points
+# print(len(all_points), all_points.shape)
 
-inner_points = list(set(all_points) - set(envelope_points))
+# inner_points = list(set(all_points) - set(envelope_points))
 
 # print("Voxels generated")
 
@@ -79,17 +80,32 @@ inner_points = list(set(all_points) - set(envelope_points))
 # rleg = sub_mesh_cube((0.3,0.7,0.3), -0.16, 0.1)
 # cube = cube_mesh((0.15,0.1,0.15), (0,1.5,0))
 # cube = sphere_mesh(0.095, (0,1.68,0.01))
-
 # head_box = mesh_sphere(0.15, (0,1.6,0.03))
-# contained = man.contains(man_vox.points)
-# in_points = [man_vox.points[i] for i in range(len(contained)) if contained[i] == True ]
-# print("Contains done", len(in_points))
 
-# cloud_original = trimesh.points.PointCloud(man.sample(5000))
+
+# surface_mesh_pts = man.vertices
+# surface_sample_pts = man.sample(5000)
+# contained = man.contains(envelope_points)
+# surface_vox_out_pts = [envelope_points[i] for i in range(len(contained)) if contained[i] == False ]
+# surface_vox_in_pts = [envelope_points[i] for i in range(len(contained)) if contained[i] == True ]
+
+
+# in_points = [man_vox.points[i] for i in range(len(contained)) if contained[i] == True ]
+
+volume_sample_pts = trimesh.sample.volume_mesh(man, 5000)
+# print(envelope_points.shape, man_vox.points.shape)
+env_hash = [_hash(a) for a in envelope_points]
+volume_vox_pts = [p for p in man_vox.points if _hash(p) not in env_hash ]
+
+# print(man_vox.points[4000] in envelope_points)
+# print(volume_vox_pts)
+
+# cloud_in = trimesh.points.PointCloud(man.sample(5000))
+cloud_in = trimesh.points.PointCloud(volume_vox_pts)
 cloud_out = trimesh.points.PointCloud(man.vertices)
-cloud_in = trimesh.points.PointCloud(inner_points)
+# cloud_in = trimesh.points.PointCloud(inner_points)
 # man_vox = cloud_original.voxelized(pitch=0.02)
-scene = trimesh.Scene([cloud_out, cloud_in])
+scene = trimesh.Scene([cloud_in, cloud_out])
 print("Scene build")
 # scene = trimesh.Scene([man,cloud_original])
 
@@ -101,13 +117,15 @@ scene.show()
 # mesh.show()
 
 #A chaque fois - center, outer, inner /if area: left-right
-
 # areas:
 # hands, head, arms, knees
 # points:
 # eyes, mouth, hears, nose, butt, tits, biceps, heart, lungs, liver, plexus
 
 # fingers ?
+
+
+# def add_nexus:
 
 
 
